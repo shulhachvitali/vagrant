@@ -1,8 +1,0 @@
----
-# vars file for web
-      Jenkins_URL: "http://localhost:8080/jenkins/"
-      Application_URL: "http://localhost:8080/mnt-lab/"
-      tomcat_port: "9090"
-      nginx_port: "8080"
-      jenkins_port: "9080"
- 
