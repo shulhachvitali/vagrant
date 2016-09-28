@@ -1,0 +1,43 @@
+---
+# tasks file for jenkins
+  - debug: msg="Will install Jenkins"
+  - name: jenkins key install
+    rpm_key: state=present key=http://pkg.jenkins.io/redhat-stable/jenkins.io.key
+  - name: Jenkins repo install
+    get_url: url=http://pkg.jenkins.io/redhat-stable/jenkins.repo dest=/etc/yum.repos.d/jenkins.repo
+  - name: Installing git
+    yum: name=git state=present
+  - name: jenkins installlinnngg
+    yum: 
+      name: jenkins
+      state: latest
+  
+  - name: deploy1
+    copy: src=jobs dest=/var/lib/jenkins owner=jenkins mode=0775 force=no
+  - name: deploy2
+    copy: src=plugins dest=/var/lib/jenkins owner=jenkins mode=0775 force=no
+  - name: deploy3
+    copy: src=jenkins.mvn.GlobalMavenConfig.xml dest=/var/lib/jenkins/jenkins.mvn.GlobalMavenConfig.xml owner=jenkins mode=0775
+  - name: deploy6
+    copy: src=hudson.tasks.Maven.xml dest=/var/lib/jenkins/hudson.tasks.Maven.xml owner=jenkins mode=0775
+  - name: jenkins config
+    copy: 
+      src: config.xml
+      dest: /var/lib/jenkins/config.xml
+    notify: restart jenkins 
+  - name: jenkins main conf
+    copy:
+      src: jenkins
+      dest: /etc/sysconfig/jenkins
+      owner: jenkins
+      group: jenkins
+    notify: restart jenkins
+  - name: preparing2
+    file: path=/var/lib/jenkins state=directory recurse=yes owner=jenkins group=jenkins mode=0775
+    notify: restart jenkins
+
+  - name: jenkins start
+    service:
+      name: jenkins
+      state: started
+      enabled: yes

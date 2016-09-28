@@ -1,0 +1,19 @@
+---
+# tasks file for web
+- debug: msg="Will install NGINX"
+- name: NGINX | Installing NGINX repo rpm
+  yum:
+    name: http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm
+- name: NGINX | Installing NGINX
+  yum:
+    name: nginx
+    state: latest
+- name: Copying Jenkins config for NGINX
+  template: src=virtual.conf dest=/etc/nginx/conf.d/ owner=nginx group=nginx
+  notify:
+    - restart webserver
+- name: NGINX | Starting NGINX
+  service:
+    name: nginx
+    state: started
+    enabled: yes
