@@ -1,0 +1,53 @@
+- name: Provision with Ansible
+  hosts: all
+  become: yes
+
+  tasks:
+
+  - name: jenkins repository key install
+    rpm_key: state=present key=http://pkg.jenkins.io/redhat-stable/jenkins.io.key
+  - name: Jenkins repository install
+    get_url: url=http://pkg.jenkins.io/redhat-stable/jenkins.repo dest=/etc/yum.repos.d/jenkins.repo
+  - name: Yum installation block
+    yum: name={{item.name}} state={{item.state}}
+    with_items:
+        - {name: "http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm", state: installed}
+        - {name: git, state: present}
+        - {name: nginx, state: latest}
+        - {name: java-1.7.0-openjdk-devel, state: installed}
+        - {name: tomcat, state: installed}
+        - {name: tomcat-webapps, state: installed}
+        - {name: jenkins, state: latest}
+  - name: copy process of resources
+    copy: src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}} force=no   
+    with_items:
+        - {src: server.xml, dest: /usr/share/tomcat/conf/server.xml, owner: tomcat, group: tomcat}
+        - {src: config.xml, dest: /var/lib/jenkins/config.xml, owner: jenkins, group: jenkins}
+        - {src: jenkins, dest: /etc/sysconfig/jenkins, owner: jenkins, group: jenkins}
+        - {src: virtual.conf, dest: /etc/nginx/conf.d/virtual.conf, owner: nginx, group: nginx}
+        - {src: jobs, dest: /var/lib/jenkins/, owner: jenkins, group: jenkins}
+        - {src: plugins, dest: /var/lib/jenkins/, owner: jenkins, group: jenkins}
+        - {src: jenkins.mvn.GlobalMavenConfig.xml, dest: /var/lib/jenkins/jenkins.mvn.GlobalMavenConfig.xml, owner: jenkins, group: jenkins}
+        - {src: hudson.tasks.Maven.xml, dest: /var/lib/jenkins/hudson.tasks.Maven.xml, owner: jenkins, group: jenkins}
+    notify:
+        - restart tomcat
+        - restart jenkins
+        - restart webserver
+       
+  - name: chaging onership
+    file: path=/var/lib/tomcat/webapps state=directory recurse=yes mode=0777
+
+  - name: starting services
+    service: name={{item.name}} state=started enabled=yes
+    with_items:
+        - {name: tomcat}
+        - {name: jenkins}
+        - {name: nginx}
+
+  handlers:
+   - name: restart webserver
+     service: name=nginx state=restarted
+   - name: restart tomcat
+     service: name=tomcat state=restarted
+   - name: restart jenkins
+     service: name=jenkins state=restarted
